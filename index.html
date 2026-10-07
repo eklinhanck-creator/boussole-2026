@@ -255,6 +255,12 @@
     try { localStorage.setItem(LOCAL_FALLBACK_KEY, JSON.stringify(data)); } catch (e) { /* indisponible */ }
   }
 
+  function setSaveNote(msg, isError) {
+    var el = document.getElementById("storeNote");
+    el.textContent = msg;
+    el.style.color = isError ? "var(--danger)" : "";
+  }
+
   function schedulePersist() {
     if (!dataRef) { persistLocalFallback(); return; }
     if (writeTimer) clearTimeout(writeTimer);
@@ -263,7 +269,12 @@
       var snapshot = JSON.parse(JSON.stringify(data));
       writeChain = writeChain.then(function () {
         return dataRef.set({ objectifs: snapshot, updatedAt: new Date().toISOString() });
-      }).catch(function () { showStatus("Sauvegarde impossible pour le moment."); });
+      }).then(function () {
+        setSaveNote("Enregistré à " + new Date().toLocaleTimeString("fr-FR") + ", partagé entre tes appareils.", false);
+      }).catch(function (e) {
+        var why = (e && (e.code || e.message)) || "erreur inconnue";
+        setSaveNote("Sauvegarde impossible (" + why + "). Tes dernières modifications ne sont pas enregistrées.", true);
+      });
     }, 700);
   }
 
