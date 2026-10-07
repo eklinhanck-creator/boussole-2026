@@ -288,7 +288,9 @@
       document.getElementById("storeNote").textContent = "Chaque changement est enregistré automatiquement, partagé entre tes appareils.";
       try {
         var snap = await dataRef.get();
-        data = (snap.exists && snap.data() && Array.isArray(snap.data().objectifs)) ? snap.data().objectifs : [];
+        // Copie profonde : les objets renvoyés par la base peuvent être en lecture seule,
+        // et une affectation y échoue sans erreur (la sauvegarde écrirait alors l'ancien contenu).
+        data = (snap.exists && snap.data() && Array.isArray(snap.data().objectifs)) ? JSON.parse(JSON.stringify(snap.data().objectifs)) : [];
       } catch (e) {
         data = [];
         showStatus("Lecture des données impossible pour le moment.");
