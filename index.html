@@ -195,6 +195,7 @@
     </div>
     <div class="controls-row">
       <button class="reset" id="resetBtn">Réinitialiser à la version d'origine</button>
+      <button class="reset" id="resetCancelBtn" hidden>Annuler</button>
       <span class="save-note" id="storeNote">Chaque changement est enregistré automatiquement.</span>
     </div>
   </footer>
@@ -288,8 +289,31 @@
     render();
   }
 
+  // Confirmation intégrée à la page : confirm() est bloqué dans les artefacts claude.ai.
+  var RESET_LABEL = "Réinitialiser à la version d'origine";
+  var resetTimer = null;
+
+  function disarmReset() {
+    if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+    document.getElementById("resetBtn").textContent = RESET_LABEL;
+    document.getElementById("resetBtn").removeAttribute("data-armed");
+    document.getElementById("resetCancelBtn").hidden = true;
+  }
+
+  function onResetClick() {
+    var btn = document.getElementById("resetBtn");
+    if (btn.getAttribute("data-armed") === "1") {
+      disarmReset();
+      resetDefaults();
+      return;
+    }
+    btn.setAttribute("data-armed", "1");
+    btn.textContent = "Confirmer : remplacer le contenu actuel";
+    document.getElementById("resetCancelBtn").hidden = false;
+    resetTimer = setTimeout(disarmReset, 8000);
+  }
+
   async function resetDefaults() {
-    if (!confirm("Réinitialiser remplace le contenu actuel par la version d'origine. Continuer ?")) return;
     if (dbNS) {
       try {
         var origRef = dbNS.doc("boussole/original");
@@ -737,7 +761,8 @@
 
   initStore();
 
-  document.getElementById("resetBtn").addEventListener("click", resetDefaults);
+  document.getElementById("resetBtn").addEventListener("click", onResetClick);
+  document.getElementById("resetCancelBtn").addEventListener("click", disarmReset);
   var pdfBtn = document.getElementById("exportPdfBtn");
   var xlsxBtn = document.getElementById("exportXlsxBtn");
   var docxBtn = document.getElementById("exportDocxBtn");
