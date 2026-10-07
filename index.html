@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boussole 2026 — Suivi des objectifs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4EFDE;
+    --panel: #FFFDF7;
+    --panel-2: #FBF7EC;
+    --ink: #20242B;
+    --muted: #6B7178;
+    --accent: #93701F;
+    --line: #DCD1AC;
+    --nord: #3F6690;
+    --est: #56774E;
+    --sud: #9C4E42;
+    --ouest: #93701F;
+    --st-termine: #4C7A4A;
+    --st-encours: #B27A1E;
+    --st-afaire: #A2453C;
+    --st-abandon: #7A7F86;
+    --danger: #A2453C;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101820; --panel: #182430; --panel-2: #1D2A37; --ink: #ECE6D6; --muted: #98A2AC;
+      --accent: #D6B15C; --line: #2B3A47; --nord: #7CA2C9; --est: #8FB283; --sud: #C97C6C; --ouest: #D6B15C;
+      --st-termine: #7BAE77; --st-encours: #D6B15C; --st-afaire: #C97C6C; --st-abandon: #8A9199; --danger: #C97C6C;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101820; --panel: #182430; --panel-2: #1D2A37; --ink: #ECE6D6; --muted: #98A2AC;
+    --accent: #D6B15C; --line: #2B3A47; --nord: #7CA2C9; --est: #8FB283; --sud: #C97C6C; --ouest: #D6B15C;
+    --st-termine: #7BAE77; --st-encours: #D6B15C; --st-afaire: #C97C6C; --st-abandon: #8A9199; --danger: #C97C6C;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5; padding: 32px 20px 80px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+
+  header.top { margin-bottom: 36px; }
+  .eyebrow { color: var(--muted); font-size: 13px; margin: 0 0 6px; }
+  h1 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: clamp(28px, 5vw, 40px); margin: 0 0 8px; }
+  .sub { color: var(--muted); max-width: 66ch; margin: 0; font-size: 15px; }
+
+  .hero {
+    display: flex; align-items: center; gap: 32px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 4px; padding: 28px; margin: 28px 0 32px; flex-wrap: wrap;
+  }
+  .gauge { position: relative; width: 200px; flex: none; }
+  .gauge svg { width: 100%; display: block; }
+  .gauge .track { fill: none; stroke: var(--line); stroke-width: 14; }
+  .gauge .fill { fill: none; stroke: var(--accent); stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 0.5s ease; }
+  .gauge-value { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-family: "Fraunces", serif; font-size: 34px; font-weight: 600; }
+  .gauge-label { position: absolute; left: 0; right: 0; bottom: -18px; text-align: center; font-size: 12px; color: var(--muted); }
+  .hero-side { flex: 1 1 320px; min-width: 260px; }
+  .pole-bars { display: flex; flex-direction: column; gap: 10px; }
+  .pole-bar-row { display: grid; grid-template-columns: 150px 1fr 42px; align-items: center; gap: 10px; font-size: 13px; }
+  .pole-bar-track { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .pole-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+  .pole-name-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 14px 0 0; font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  section.pole-section { margin: 44px 0 0; }
+  .pole-head { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid var(--line); padding-bottom: 8px; gap: 12px; flex-wrap: wrap; }
+  h2.pole-title { font-family: "Fraunces", serif; font-weight: 600; font-size: 20px; margin: 0; }
+  .pole-title .tag { font-size: 12px; color: var(--muted); font-family: "IBM Plex Sans", sans-serif; font-weight: 400; margin-left: 8px; }
+  .pole-rate { font-family: "Fraunces", serif; font-size: 20px; font-weight: 600; }
+
+  .obj-card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 18px 20px; margin-top: 16px; }
+  .obj-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  input.obj-title {
+    flex: 1; font-family: "Fraunces", serif; font-size: 17px; font-weight: 500; color: var(--ink);
+    background: transparent; border: none; border-bottom: 1px solid transparent; padding: 2px 0;
+  }
+  input.obj-title:hover, input.obj-title:focus { border-bottom: 1px solid var(--line); outline: none; }
+  .obj-rate { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  button.icon-btn {
+    border: none; background: transparent; color: var(--muted); cursor: pointer; font-size: 13px;
+    padding: 4px 6px; border-radius: 3px; line-height: 1;
+  }
+  button.icon-btn:hover { color: var(--danger); background: var(--panel-2); }
+
+  h4.section-label { font-size: 11px; text-transform: none; color: var(--muted); font-weight: 500; margin: 16px 0 4px; }
+
+  .obj-body { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 28px; align-items: start; }
+  .obj-body > div:nth-child(2) { border-left: 1px solid var(--line); padding-left: 24px; }
+  @media (max-width: 680px) {
+    .obj-body { grid-template-columns: 1fr; }
+    .obj-body > div:nth-child(2) { border-left: none; padding-left: 0; margin-top: 6px; }
+  }
+
+  .item-wrap:not(:last-child) .action-row { border-bottom: 1px solid var(--line); }
+  .action-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+  input.action-text {
+    flex: 1; min-width: 0; font-family: inherit; font-size: 14px; color: var(--ink); background: transparent;
+    border: none; border-bottom: 1px solid transparent; padding: 4px 2px;
+  }
+  input.action-text:hover, input.action-text:focus { border-bottom: 1px solid var(--line); outline: none; }
+  select.status-select {
+    font-family: inherit; font-size: 13px; padding: 5px 6px; border-radius: 3px;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); flex: none;
+  }
+  .weight-badge { flex: none; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; width: 34px; text-align: right; }
+  .comment-toggle { flex: none; opacity: 0.55; }
+  .comment-toggle.has-comment { opacity: 1; color: var(--accent); }
+  .comment-wrap { padding: 0 0 10px 2px; }
+  .comment-wrap.hidden { display: none; }
+  .comment-wrap textarea {
+    width: 100%; font-family: inherit; font-size: 13px; color: var(--ink); background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 3px; padding: 6px 8px; resize: vertical; min-height: 34px;
+  }
+
+  button.add-btn {
+    font-family: inherit; font-size: 13px; padding: 7px 12px; border-radius: 3px; margin-top: 10px;
+    border: 1px dashed var(--line); background: transparent; color: var(--muted); cursor: pointer;
+  }
+  button.add-btn:hover { color: var(--ink); border-color: var(--accent); }
+  button.add-obj-btn { margin-top: 16px; }
+
+  details.obs-field { margin-top: 16px; }
+  details.obs-field summary { cursor: pointer; font-size: 12px; color: var(--muted); list-style: none; }
+  details.obs-field summary::-webkit-details-marker { display: none; }
+  details.obs-field summary::before { content: "▸ "; }
+  details.obs-field[open] summary::before { content: "▾ "; }
+  details.obs-field textarea {
+    width: 100%; font-family: inherit; font-size: 13px; color: var(--ink); background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 3px; padding: 8px; margin-top: 8px; resize: vertical; min-height: 44px;
+  }
+
+  .empty-note { color: var(--muted); font-size: 13px; margin-top: 16px; }
+
+  footer.controls { margin-top: 44px; display: flex; flex-direction: column; gap: 14px; }
+  .controls-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  button.reset, button.export-btn {
+    font-family: inherit; font-size: 13px; padding: 8px 14px; border-radius: 3px;
+    border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer;
+  }
+  button.export-btn { color: var(--ink); }
+  button.reset:hover, button.export-btn:hover { color: var(--ink); border-color: var(--accent); }
+  button.export-btn:disabled, button.reset:disabled { opacity: 0.5; cursor: default; }
+  .save-note, #downloadStatus { font-size: 12px; color: var(--muted); }
+  .controls-label { font-size: 12px; color: var(--muted); margin-right: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <p class="eyebrow">Tableau de pilotage — Leadership, sérénité, liberté</p>
+    <h1>Boussole 2026</h1>
+    <p class="sub">Actions et indicateurs ont chacun leur statut. La catégorie fait la moyenne de tout ce qu'elle contient, le global fait la moyenne de tout. Objectifs, actions et indicateurs sont modifiables, ajoutables et supprimables.</p>
+  </header>
+
+  <div class="hero">
+    <div class="gauge">
+      <svg viewBox="0 0 200 120">
+        <path class="track" d="M20,110 A80,80 0 0 1 180,110"></path>
+        <path class="fill" id="gaugeFill" d="M20,110 A80,80 0 0 1 180,110" stroke-dasharray="251.2" stroke-dashoffset="251.2"></path>
+      </svg>
+      <div class="gauge-value" id="globalPct">0%</div>
+      <div class="gauge-label">Taux global</div>
+    </div>
+    <div class="hero-side">
+      <div class="pole-bars" id="poleBars"></div>
+      <p class="legend">
+        <span><span class="dot" style="background:var(--st-termine)"></span>Terminé = 100%</span>
+        <span><span class="dot" style="background:var(--st-encours)"></span>En cours = 25%</span>
+        <span><span class="dot" style="background:var(--st-afaire)"></span>À faire = 0%</span>
+        <span><span class="dot" style="background:var(--st-abandon)"></span>Abandonné = exclu du calcul</span>
+      </p>
+    </div>
+  </div>
+
+  <div id="polesContainer"></div>
+
+  <footer class="controls">
+    <div class="controls-row">
+      <span class="controls-label">Télécharger le tableau de bord à date :</span>
+      <button class="export-btn" id="exportPdfBtn">PDF</button>
+      <button class="export-btn" id="exportXlsxBtn">Excel</button>
+      <button class="export-btn" id="exportDocxBtn">Word</button>
+      <span id="downloadStatus"></span>
+    </div>
+    <div class="controls-row">
+      <button class="reset" id="resetBtn">Réinitialiser à la version d'origine</button>
+      <span class="save-note" id="storeNote">Chaque changement est enregistré automatiquement.</span>
+    </div>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js"></script>
+
+<script>
+(function () {
+  var LOCAL_FALLBACK_KEY = "boussole2026_local_fallback_v1";
+
+  var POLES = [
+    { id: "p1", name: "Carrière & mobilité", tag: "priorité absolue", color: "var(--nord)" },
+    { id: "p2", name: "Sérénité & esprit", tag: "charge mentale zéro", color: "var(--est)" },
+    { id: "p3", name: "Famille & cœur", tag: "", color: "var(--sud)" },
+    { id: "p4", name: "Liberté financière", tag: "", color: "var(--ouest)" }
+  ];
+
+  var STATUS_LABELS = { termine: "🟢 Terminé", encours: "🟠 En cours", afaire: "🔴 À faire", abandonne: "⚫ Abandonné" };
+  var STATUS_TEXT = { termine: "Terminé", encours: "En cours", afaire: "À faire", abandonne: "Abandonné" };
+  var STATUS_WEIGHT = { termine: 100, encours: 25, afaire: 0 };
+
+  var data = [];
+  var idCounter = 0;
+  var dbNS = null;
+  var dataRef = null;
+  var writeTimer = null;
+  var writeChain = Promise.resolve();
+
+  function weightOf(status) { return status === "abandonne" ? null : STATUS_WEIGHT[status]; }
+
+  function avgWeight(items) {
+    var sum = 0, count = 0;
+    items.forEach(function (a) {
+      var w = weightOf(a.status);
+      if (w !== null) { sum += w; count += 1; }
+    });
+    return { pct: count ? Math.round(sum / count) : null, sum: sum, count: count };
+  }
+
+  function newId(prefix) { idCounter += 1; return prefix + "-" + Date.now() + "-" + idCounter; }
+
+  // ---------- Stockage ----------
+
+  function loadLocalFallback() {
+    try {
+      var raw = localStorage.getItem(LOCAL_FALLBACK_KEY);
+      data = raw ? JSON.parse(raw) : [];
+    } catch (e) { data = []; }
+  }
+
+  function persistLocalFallback() {
+    try { localStorage.setItem(LOCAL_FALLBACK_KEY, JSON.stringify(data)); } catch (e) { /* indisponible */ }
+  }
+
+  function schedulePersist() {
+    if (!dataRef) { persistLocalFallback(); return; }
+    if (writeTimer) clearTimeout(writeTimer);
+    writeTimer = setTimeout(function () {
+      writeTimer = null;
+      var snapshot = JSON.parse(JSON.stringify(data));
+      writeChain = writeChain.then(function () {
+        return dataRef.set({ objectifs: snapshot, updatedAt: new Date().toISOString() });
+      }).catch(function () { showStatus("Sauvegarde impossible pour le moment."); });
+    }, 700);
+  }
+
+  async function initStore() {
+    try {
+      if (window.claude && window.claude.use) { dbNS = await window.claude.use("db"); }
+    } catch (e) { dbNS = null; }
+
+    if (dbNS) {
+      dataRef = dbNS.doc("boussole/data");
+      document.getElementById("storeNote").textContent = "Chaque changement est enregistré automatiquement, partagé entre tes appareils.";
+      try {
+        var snap = await dataRef.get();
+        data = (snap.exists && snap.data() && Array.isArray(snap.data().objectifs)) ? snap.data().objectifs : [];
+      } catch (e) {
+        data = [];
+        showStatus("Lecture des données impossible pour le moment.");
+      }
+    } else {
+      document.getElementById("storeNote").textContent = "Base indisponible dans cette vue : sauvegarde locale à ce navigateur uniquement.";
+      loadLocalFallback();
+    }
+    render();
+  }
+
+  async function resetDefaults() {
+    if (!confirm("Réinitialiser remplace le contenu actuel par la version d'origine. Continuer ?")) return;
+    if (dbNS) {
+      try {
+        var origRef = dbNS.doc("boussole/original");
+        var snap = await origRef.get();
+        if (snap.exists && snap.data() && Array.isArray(snap.data().objectifs)) {
+          data = JSON.parse(JSON.stringify(snap.data().objectifs));
+          await dataRef.set({ objectifs: data, updatedAt: new Date().toISOString() });
+          render();
+        } else {
+          showStatus("Aucune version d'origine enregistrée pour le moment.");
+        }
+      } catch (e) {
+        showStatus("Réinitialisation impossible pour le moment.");
+      }
+    } else {
+      data = [];
+      persistLocalFallback();
+      render();
+    }
+  }
+
+  // ---------- Rendu ----------
+
+  function render() {
+    var container = document.getElementById("polesContainer");
+    container.innerHTML = "";
+
+    POLES.forEach(function (pole) {
+      var poleObjs = data.filter(function (o) { return o.pole === pole.id; });
+
+      var section = document.createElement("section");
+      section.className = "pole-section";
+
+      var head = document.createElement("div");
+      head.className = "pole-head";
+      head.innerHTML =
+        '<h2 class="pole-title">' + pole.name + (pole.tag ? '<span class="tag">' + pole.tag + "</span>" : "") + '</h2>' +
+        '<span class="pole-rate" id="rate-' + pole.id + '" style="color:' + pole.color + '"></span>';
+      section.appendChild(head);
+
+      if (poleObjs.length === 0) {
+        var empty = document.createElement("p");
+        empty.className = "empty-note";
+        empty.textContent = "Aucun objectif pour l'instant.";
+        section.appendChild(empty);
+      }
+
+      poleObjs.forEach(function (obj) {
+        section.appendChild(renderObjCard(obj));
+      });
+
+      var addObjBtn = document.createElement("button");
+      addObjBtn.className = "add-btn add-obj-btn";
+      addObjBtn.textContent = "+ Ajouter un objectif";
+      addObjBtn.addEventListener("click", function () {
+        var newObj = { id: newId("o"), pole: pole.id, title: "Nouvel objectif", obs: "", actions: [], indicators: [] };
+        data.push(newObj);
+        schedulePersist();
+        render();
+        var input = document.querySelector('input[data-obj="' + newObj.id + '"].obj-title');
+        if (input) { input.focus(); input.select(); }
+      });
+      section.appendChild(addObjBtn);
+
+      container.appendChild(section);
+    });
+
+    buildPoleBars();
+    recomputeRates();
+  }
+
+  function renderObjCard(obj) {
+    var card = document.createElement("div");
+    card.className = "obj-card";
+
+    var headRow = document.createElement("div");
+    headRow.className = "obj-head";
+
+    var titleInput = document.createElement("input");
+    titleInput.className = "obj-title";
+    titleInput.value = obj.title;
+    titleInput.setAttribute("data-obj", obj.id);
+    titleInput.addEventListener("input", function () { obj.title = titleInput.value; schedulePersist(); });
+    headRow.appendChild(titleInput);
+
+    var rateSpan = document.createElement("span");
+    rateSpan.className = "obj-rate";
+    rateSpan.id = "objrate-" + obj.id;
+    headRow.appendChild(rateSpan);
+
+    var delObjBtn = document.createElement("button");
+    delObjBtn.className = "icon-btn";
+    delObjBtn.title = "Supprimer cet objectif";
+    delObjBtn.textContent = "✕";
+    delObjBtn.addEventListener("click", function () {
+      data = data.filter(function (o) { return o.id !== obj.id; });
+      schedulePersist();
+      render();
+    });
+    headRow.appendChild(delObjBtn);
+
+    card.appendChild(headRow);
+
+    var bodyWrap = document.createElement("div");
+    bodyWrap.className = "obj-body";
+    bodyWrap.appendChild(renderItemSection(obj, "actions", "Plan d'action", "+ Ajouter une action", true));
+    bodyWrap.appendChild(renderItemSection(obj, "indicators", "Indicateurs (IOV)", "+ Ajouter un indicateur", false));
+    card.appendChild(bodyWrap);
+
+    var obsDetails = document.createElement("details");
+    obsDetails.className = "obs-field";
+    obsDetails.innerHTML = "<summary>Observations</summary>";
+    var obsArea = document.createElement("textarea");
+    obsArea.value = obj.obs || "";
+    obsArea.addEventListener("input", function () { obj.obs = obsArea.value; schedulePersist(); });
+    obsDetails.appendChild(obsArea);
+    card.appendChild(obsDetails);
+
+    return card;
+  }
+
+  function renderItemSection(obj, listKey, label, addLabel, allowComment) {
+    var wrap = document.createElement("div");
+
+    var h4 = document.createElement("h4");
+    h4.className = "section-label";
+    h4.textContent = label;
+    wrap.appendChild(h4);
+
+    var listWrap = document.createElement("div");
+    obj[listKey].forEach(function (item) {
+      listWrap.appendChild(renderItemRow(obj, listKey, item, allowComment));
+    });
+    wrap.appendChild(listWrap);
+
+    var addBtn = document.createElement("button");
+    addBtn.className = "add-btn";
+    addBtn.textContent = addLabel;
+    addBtn.addEventListener("click", function () {
+      var prefix = listKey === "actions" ? "a" : "i";
+      var newItem = { id: newId(prefix), text: listKey === "actions" ? "Nouvelle action" : "Nouvel indicateur", status: "afaire", comment: "" };
+      obj[listKey].push(newItem);
+      schedulePersist();
+      render();
+      var input = document.querySelector('input[data-obj="' + obj.id + '"][data-list="' + listKey + '"][data-item="' + newItem.id + '"].action-text');
+      if (input) { input.focus(); input.select(); }
+    });
+    wrap.appendChild(addBtn);
+
+    return wrap;
+  }
+
+  function renderItemRow(obj, listKey, item, allowComment) {
+    var itemWrap = document.createElement("div");
+    itemWrap.className = "item-wrap";
+
+    var row = document.createElement("div");
+    row.className = "action-row";
+
+    var textInput = document.createElement("input");
+    textInput.className = "action-text";
+    textInput.value = item.text;
+    textInput.setAttribute("data-obj", obj.id);
+    textInput.setAttribute("data-list", listKey);
+    textInput.setAttribute("data-item", item.id);
+    textInput.addEventListener("input", function () { item.text = textInput.value; schedulePersist(); });
+    row.appendChild(textInput);
+
+    var select = document.createElement("select");
+    select.className = "status-select";
+    Object.keys(STATUS_LABELS).forEach(function (key) {
+      var opt = document.createElement("option");
+      opt.value = key; opt.textContent = STATUS_LABELS[key];
+      if (item.status === key) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener("change", function () {
+      item.status = select.value;
+      schedulePersist();
+      recomputeRates();
+    });
+    row.appendChild(select);
+
+    var weightBadge = document.createElement("span");
+    weightBadge.className = "weight-badge";
+    weightBadge.id = "w-" + listKey[0] + "-" + obj.id + "-" + item.id;
+    row.appendChild(weightBadge);
+
+    var commentWrap = null;
+    if (allowComment) {
+      commentWrap = document.createElement("div");
+      commentWrap.className = "comment-wrap" + (item.comment ? "" : " hidden");
+      var commentArea = document.createElement("textarea");
+      commentArea.placeholder = "Commentaire...";
+      commentArea.value = item.comment || "";
+      commentArea.addEventListener("input", function () { item.comment = commentArea.value; schedulePersist(); });
+      commentWrap.appendChild(commentArea);
+
+      var commentBtn = document.createElement("button");
+      commentBtn.className = "icon-btn comment-toggle" + (item.comment ? " has-comment" : "");
+      commentBtn.title = "Commentaire";
+      commentBtn.textContent = "💬";
+      commentBtn.addEventListener("click", function () {
+        commentWrap.classList.toggle("hidden");
+        if (!commentWrap.classList.contains("hidden")) { commentArea.focus(); }
+      });
+      row.appendChild(commentBtn);
+    }
+
+    var delBtn = document.createElement("button");
+    delBtn.className = "icon-btn";
+    delBtn.title = "Supprimer";
+    delBtn.textContent = "✕";
+    delBtn.addEventListener("click", function () {
+      obj[listKey] = obj[listKey].filter(function (a) { return a.id !== item.id; });
+      schedulePersist();
+      render();
+    });
+    row.appendChild(delBtn);
+
+    itemWrap.appendChild(row);
+    if (commentWrap) { itemWrap.appendChild(commentWrap); }
+    return itemWrap;
+  }
+
+  function buildPoleBars() {
+    var container = document.getElementById("poleBars");
+    container.innerHTML = "";
+    POLES.forEach(function (pole) {
+      var row = document.createElement("div");
+      row.className = "pole-bar-row";
+      row.innerHTML =
+        '<span><span class="pole-name-dot" style="background:' + pole.color + '"></span>' + pole.name + "</span>" +
+        '<span class="pole-bar-track"><span class="pole-bar-fill" id="bar-' + pole.id + '" style="background:' + pole.color + '"></span></span>' +
+        '<span id="pct-' + pole.id + '" style="text-align:right"></span>';
+      container.appendChild(row);
+    });
+  }
+
+  function objItems(obj) { return obj.actions.concat(obj.indicators); }
+
+  function recomputeRates() {
+    var globalItems = [];
+
+    POLES.forEach(function (pole) {
+      var poleObjs = data.filter(function (o) { return o.pole === pole.id; });
+      var poleItems = [];
+
+      poleObjs.forEach(function (obj) {
+        objItems(obj).forEach(function (it) {
+          var listKey = obj.actions.indexOf(it) !== -1 ? "actions" : "indicators";
+          var w = weightOf(it.status);
+          var badge = document.getElementById("w-" + listKey[0] + "-" + obj.id + "-" + it.id);
+          if (badge) badge.textContent = w === null ? "—" : w + "%";
+        });
+        var items = objItems(obj);
+        poleItems = poleItems.concat(items);
+        globalItems = globalItems.concat(items);
+
+        var objRate = avgWeight(items);
+        var objRateEl = document.getElementById("objrate-" + obj.id);
+        if (objRateEl) objRateEl.textContent = objRate.pct === null ? "—" : objRate.pct + "%";
+      });
+
+      var poleRate = avgWeight(poleItems);
+      var pct = poleRate.pct === null ? 0 : poleRate.pct;
+
+      var bar = document.getElementById("bar-" + pole.id);
+      var pctLabel = document.getElementById("pct-" + pole.id);
+      var rateHead = document.getElementById("rate-" + pole.id);
+      if (bar) bar.style.width = pct + "%";
+      if (pctLabel) pctLabel.textContent = pct + "%";
+      if (rateHead) rateHead.textContent = pct + "%";
+    });
+
+    var globalRate = avgWeight(globalItems);
+    var globalPct = globalRate.pct === null ? 0 : globalRate.pct;
+    document.getElementById("globalPct").textContent = globalPct + "%";
+    var circumference = 251.2;
+    document.getElementById("gaugeFill").style.strokeDashoffset = circumference * (1 - globalPct / 100);
+  }
+
+  // ---------- Export ----------
+
+  function buildExportData() {
+    var now = new Date();
+    var dateStr = now.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+
+    var poles = POLES.map(function (pole) {
+      var poleObjs = data.filter(function (o) { return o.pole === pole.id; });
+      var poleItems = [];
+      var objectifs = poleObjs.map(function (obj) {
+        var items = obj.actions.map(function (a) { return { type: "Action", text: a.text, status: a.status, comment: a.comment || "" }; })
+          .concat(obj.indicators.map(function (i) { return { type: "Indicateur", text: i.text, status: i.status, comment: "" }; }));
+        poleItems = poleItems.concat(items);
+        var r = avgWeight(items);
+        return { title: obj.title, pct: r.pct, items: items };
+      });
+      var pr = avgWeight(poleItems);
+      return { name: pole.name, pct: pr.pct === null ? 0 : pr.pct, objectifs: objectifs };
+    });
+
+    var allItems = [];
+    poles.forEach(function (p) { p.objectifs.forEach(function (o) { allItems = allItems.concat(o.items); }); });
+    var gr = avgWeight(allItems);
+
+    return { dateStr: dateStr, globalPct: gr.pct === null ? 0 : gr.pct, poles: poles };
+  }
+
+  function showStatus(msg) {
+    var el = document.getElementById("downloadStatus");
+    el.textContent = msg;
+    setTimeout(function () { if (el.textContent === msg) el.textContent = ""; }, 5000);
+  }
+
+  async function triggerDownload(filename, blob) {
+    try {
+      if (!window.claude || !window.claude.use) { showStatus("Téléchargement indisponible dans cet aperçu."); return; }
+      var downloads = await window.claude.use("downloads");
+      if (!downloads) { showStatus("Téléchargement indisponible dans cette vue."); return; }
+      var res = await downloads.save({ filename: filename, data: blob });
+      showStatus(res.status === "saved" ? "Fichier enregistré." : "Fichier transmis.");
+    } catch (e) {
+      if (e && e.code === "declined") { showStatus("Téléchargement annulé."); }
+      else { showStatus("Le téléchargement a échoué."); }
+    }
+  }
+
+  function withBusyButton(btn, fn) {
+    return async function () {
+      var original = btn.textContent;
+      btn.disabled = true; btn.textContent = "Génération…";
+      try { await fn(); } catch (e) { showStatus("La génération a échoué."); }
+      btn.disabled = false; btn.textContent = original;
+    };
+  }
+
+  async function exportPdf() {
+    var jsPDFCtor = window.jspdf.jsPDF;
+    var doc = new jsPDFCtor();
+    var ex = buildExportData();
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(18);
+    doc.text("Boussole 2026 — Suivi des objectifs", 14, 20);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+    doc.text("Genere le " + ex.dateStr, 14, 27);
+
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+    doc.text("Resume", 14, 40);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11);
+    doc.text("Taux de realisation global : " + ex.globalPct + "%", 14, 48);
+
+    var poleRows = ex.poles.map(function (p) { return [p.name, p.pct + "%"]; });
+    doc.autoTable({ startY: 54, head: [["Pole", "Taux"]], body: poleRows, theme: "grid", styles: { fontSize: 10 }, headStyles: { fillColor: [147, 112, 31] } });
+
+    ex.poles.forEach(function (p) {
+      doc.addPage();
+      doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+      doc.text(p.name + " — " + p.pct + "%", 14, 20);
+      var body = [];
+      p.objectifs.forEach(function (o) {
+        if (o.items.length === 0) { body.push([o.title, "—", "—", "—", "—"]); return; }
+        o.items.forEach(function (it) {
+          body.push([o.title, it.type, it.text, STATUS_TEXT[it.status] || it.status, it.comment || ""]);
+        });
+      });
+      doc.autoTable({
+        startY: 26, head: [["Objectif", "Type", "Element", "Statut", "Commentaire"]], body: body,
+        theme: "striped", styles: { fontSize: 8 }, columnStyles: { 0: { cellWidth: 38 }, 2: { cellWidth: 55 }, 4: { cellWidth: 45 } },
+        headStyles: { fillColor: [147, 112, 31] }
+      });
+    });
+
+    var blob = doc.output("blob");
+    await triggerDownload("boussole-2026.pdf", blob);
+  }
+
+  async function exportXlsx() {
+    var ex = buildExportData();
+    var wb = XLSX.utils.book_new();
+
+    var summaryRows = [
+      ["Boussole 2026 — Suivi des objectifs"],
+      ["Généré le", ex.dateStr],
+      [],
+      ["Taux global", ex.globalPct + "%"],
+      [],
+      ["Pôle", "Taux"]
+    ];
+    ex.poles.forEach(function (p) { summaryRows.push([p.name, p.pct + "%"]); });
+    var wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Résumé");
+
+    var detailRows = [["Pôle", "Objectif", "Taux objectif", "Type", "Élément", "Statut", "Commentaire"]];
+    ex.poles.forEach(function (p) {
+      p.objectifs.forEach(function (o) {
+        var objPct = o.pct === null ? "—" : o.pct + "%";
+        if (o.items.length === 0) { detailRows.push([p.name, o.title, objPct, "—", "—", "—", "—"]); return; }
+        o.items.forEach(function (it) {
+          detailRows.push([p.name, o.title, objPct, it.type, it.text, STATUS_TEXT[it.status] || it.status, it.comment || ""]);
+        });
+      });
+    });
+    var wsDetail = XLSX.utils.aoa_to_sheet(detailRows);
+    XLSX.utils.book_append_sheet(wb, wsDetail, "Détail");
+
+    var wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    var blob = new Blob([wbout], { type: "application/octet-stream" });
+    await triggerDownload("boussole-2026.xlsx", blob);
+  }
+
+  async function exportDocx() {
+    var ex = buildExportData();
+    var children = [];
+
+    children.push(new docx.Paragraph({ text: "Boussole 2026 — Suivi des objectifs", heading: docx.HeadingLevel.TITLE }));
+    children.push(new docx.Paragraph({ text: "Généré le " + ex.dateStr }));
+    children.push(new docx.Paragraph({ text: "" }));
+    children.push(new docx.Paragraph({ text: "Résumé", heading: docx.HeadingLevel.HEADING_1 }));
+    children.push(new docx.Paragraph({ text: "Taux de réalisation global : " + ex.globalPct + "%" }));
+    ex.poles.forEach(function (p) {
+      children.push(new docx.Paragraph({ text: p.name + " : " + p.pct + "%", bullet: { level: 0 } }));
+    });
+
+    ex.poles.forEach(function (p) {
+      children.push(new docx.Paragraph({ text: p.name + " — " + p.pct + "%", heading: docx.HeadingLevel.HEADING_1, pageBreakBefore: true }));
+      p.objectifs.forEach(function (o) {
+        var titleTxt = o.title + (o.pct === null ? "" : " — " + o.pct + "%");
+        children.push(new docx.Paragraph({ text: titleTxt, heading: docx.HeadingLevel.HEADING_2 }));
+        if (o.items.length === 0) {
+          children.push(new docx.Paragraph({ text: "Aucun élément." }));
+        }
+        o.items.forEach(function (it) {
+          var line = "[" + it.type + "] " + it.text + " — " + (STATUS_TEXT[it.status] || it.status);
+          if (it.comment) { line += " (" + it.comment + ")"; }
+          children.push(new docx.Paragraph({ text: line, bullet: { level: 0 } }));
+        });
+      });
+    });
+
+    var doc = new docx.Document({ sections: [{ properties: {}, children: children }] });
+    var blob = await docx.Packer.toBlob(doc);
+    await triggerDownload("boussole-2026.docx", blob);
+  }
+
+  initStore();
+
+  document.getElementById("resetBtn").addEventListener("click", resetDefaults);
+  var pdfBtn = document.getElementById("exportPdfBtn");
+  var xlsxBtn = document.getElementById("exportXlsxBtn");
+  var docxBtn = document.getElementById("exportDocxBtn");
+  pdfBtn.addEventListener("click", withBusyButton(pdfBtn, exportPdf));
+  xlsxBtn.addEventListener("click", withBusyButton(xlsxBtn, exportXlsx));
+  docxBtn.addEventListener("click", withBusyButton(docxBtn, exportDocx));
+})();
+</script>
+</body>
+</html>
